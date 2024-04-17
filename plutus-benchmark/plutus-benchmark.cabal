@@ -1,0 +1,601 @@
+cabal-version: 3.0
+name:          plutus-benchmark
+version:       0.1.0.0
+license:       Apache-2.0
+license-files:
+  LICENSE
+  NOTICE
+
+maintainer:    michael.peyton-jones@iohk.io
+author:        Plutus Core Team
+homepage:      https://github.com/iohk/plutus#readme
+bug-reports:   https://github.com/iohk/plutus/issues
+description:
+  Please see the README on GitHub at <https://github.com/IntersectMBO/plutus#readme>
+
+build-type:    Simple
+data-files:
+  common/templates/*.tpl
+  marlowe/scripts/rolepayout/*.benchmark
+  marlowe/scripts/semantics/*.benchmark
+  validation/data/*.flat
+
+source-repository head
+  type:     git
+  location: https://github.com/iohk/plutus
+
+-- Any files that use a `$$(...)` splice from the plugin should mention
+-- `PlutusTx.Plugin()` somewhere, even if it's just `import PlutusTx.Plugin()`.
+-- If none of your files mention the plugin explicitly then the code will still
+-- compile (assuming that there's a dependence on `plutus-tx-plugin`) but you'll
+-- get a warning that `plutus-tx-plugin` was not needed for compilation, and
+-- that will cause a CI failure.
+
+
+-- This should be used for anything that depends on plutus-tx-plugin, even
+-- transitively.  If you miss it out somewhere then nix will probably produce an
+-- error message saying "the component is not buildable in the current
+-- environment" if e.g. the nix shell supplies an unsupported GCH version.  See
+-- the section on GHC versions in `CONTRIBUTING.md`.
+common ghc-version-support
+  if (impl(ghc <9.6) || impl(ghc >=9.7))
+    buildable: False
+
+common lang
+  default-language:   Haskell2010
+  default-extensions:
+    DeriveFoldable
+    DeriveFunctor
+    DeriveGeneric
+    DeriveLift
+    DeriveTraversable
+    DerivingStrategies
+    DerivingVia
+    ExplicitForAll
+    FlexibleContexts
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    ScopedTypeVariables
+    StandaloneDeriving
+    Strict
+
+  -- See Note [-fno-full-laziness in Plutus Tx]
+  ghc-options:
+    -fno-specialise -fno-spec-constr -fno-strictness
+    -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    -fno-unbox-strict-fields -fno-unbox-small-strict-fields
+    -fno-full-laziness
+
+  ghc-options:
+    -Wall -Wnoncanonical-monad-instances -Wincomplete-uni-patterns
+    -Wincomplete-record-updates -Wredundant-constraints -Widentities
+    -Wunused-packages -Wmissing-deriving-strategies
+
+---------------- Common code for benchmarking ----------------
+
+library plutus-benchmark-common
+  import:          lang
+  hs-source-dirs:  common
+  exposed-modules:
+    PlutusBenchmark.Common
+    PlutusBenchmark.NaturalSort
+    PlutusBenchmark.ProtocolParameters
+
+  other-modules:   Paths_plutus_benchmark
+  build-depends:
+    , base               >=4.9   && <5
+    , bytestring
+    , criterion
+    , deepseq
+    , directory
+    , filepath
+    , flat               ^>=0.6
+    , plutus-core        ^>=1.25
+    , plutus-ledger-api  ^>=1.25
+    , plutus-tx          ^>=1.25
+    , tasty
+    , tasty-golden
+    , temporary
+    , text
+
+---------------- nofib ----------------
+
+library nofib-internal
+  import:          lang, ghc-version-support
+  hs-source-dirs:  nofib/src
+  exposed-modules:
+    PlutusBenchmark.NoFib.Clausify
+    PlutusBenchmark.NoFib.Knights
+    PlutusBenchmark.NoFib.Knights.ChessSetList
+    PlutusBenchmark.NoFib.Knights.KnightHeuristic
+    PlutusBenchmark.NoFib.Knights.Queue
+    PlutusBenchmark.NoFib.Knights.Sort
+    PlutusBenchmark.NoFib.Knights.Utils
+    PlutusBenchmark.NoFib.LastPiece
+    PlutusBenchmark.NoFib.Prime
+    PlutusBenchmark.NoFib.Queens
+
+  build-depends:
+    , base                     >=4.9   && <5
+    , deepseq
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-tx                ^>=1.25
+    , plutus-tx-plugin         ^>=1.25
+
+executable nofib-exe
+  import:         lang, ghc-version-support
+  main-is:        Main.hs
+  hs-source-dirs: nofib/exe
+  build-depends:
+    , base                     >=4.9   && <5
+    , bytestring
+    , flat                     ^>=0.6
+    , lens
+    , nofib-internal
+    , optparse-applicative
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-tx                ^>=1.25
+    , prettyprinter
+    , transformers
+
+benchmark nofib
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        BenchCek.hs
+  hs-source-dirs: nofib/bench
+  other-modules:  Shared
+  build-depends:
+    , base                     >=4.9     && <5
+    , criterion                >=1.5.9.0
+    , deepseq
+    , nofib-internal
+    , plutus-benchmark-common
+
+benchmark nofib-hs
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        BenchHaskell.hs
+  hs-source-dirs: nofib/bench
+  other-modules:  Shared
+  build-depends:
+    , base                     >=4.9 && <5
+    , criterion
+    , nofib-internal
+    , plutus-benchmark-common
+
+test-suite plutus-benchmark-nofib-tests
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  hs-source-dirs: nofib/test
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , base                                            >=4.9   && <5
+    , nofib-internal
+    , plutus-benchmark-common
+    , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
+    , plutus-tx:{plutus-tx, plutus-tx-testlib}        ^>=1.25
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+
+---------------- lists ----------------
+
+library lists-internal
+  import:          lang, ghc-version-support
+  hs-source-dirs:  lists/src
+  exposed-modules:
+    PlutusBenchmark.Lists.Lookup.Compiled
+    PlutusBenchmark.Lists.Sort
+    PlutusBenchmark.Lists.Sum.Compiled
+    PlutusBenchmark.Lists.Sum.HandWritten
+
+  other-modules:
+    PlutusBenchmark.Lists.Sort.GhcSort
+    PlutusBenchmark.Lists.Sort.InsertionSort
+    PlutusBenchmark.Lists.Sort.MergeSort
+    PlutusBenchmark.Lists.Sort.QuickSort
+
+  build-depends:
+    , base                     >=4.9   && <5
+    , mtl
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-tx                ^>=1.25
+    , plutus-tx-plugin         ^>=1.25
+
+executable list-sort-exe
+  import:         lang, ghc-version-support
+  main-is:        Main.hs
+  hs-source-dirs: lists/exe
+  build-depends:
+    , base                     >=4.9   && <5
+    , lists-internal
+    , monoidal-containers
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+
+benchmark lists
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Bench.hs
+  hs-source-dirs: lists/bench
+  build-depends:
+    , base                     >=4.9     && <5
+    , criterion                >=1.5.9.0
+    , deepseq
+    , lists-internal
+    , plutus-benchmark-common
+    , plutus-ledger-api
+
+test-suite plutus-benchmark-lists-tests
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: lists/test
+  other-modules:
+    Lookup.Spec
+    Sort.Spec
+    Sum.Spec
+
+  build-depends:
+    , base                             >=4.9   && <5
+    , lists-internal
+    , plutus-benchmark-common
+    , plutus-core:plutus-core-testlib  ^>=1.25
+    , plutus-tx:plutus-tx-testlib      ^>=1.25
+    , tasty
+    , tasty-quickcheck
+
+---------------- validation ----------------
+
+benchmark validation
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        BenchCek.hs
+  hs-source-dirs: validation/bench
+  other-modules:  Common
+  build-depends:
+    , base                     >=4.9     && <5
+    , bytestring
+    , criterion                >=1.5.9.0
+    , deepseq
+    , directory
+    , filepath
+    , flat                     ^>=0.6
+    , optparse-applicative
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+
+---------------- validation-decode ----------------
+
+benchmark validation-decode
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        BenchDec.hs
+  hs-source-dirs: validation/bench
+  other-modules:  Common
+  build-depends:
+    , base                     >=4.9     && <5
+    , bytestring
+    , criterion                >=1.5.9.0
+    , deepseq
+    , directory
+    , filepath
+    , flat                     ^>=0.6
+    , optparse-applicative
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-ledger-api        ^>=1.25
+
+---------------- validation-full ----------------
+
+benchmark validation-full
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        BenchFull.hs
+  hs-source-dirs: validation/bench
+  other-modules:  Common
+  build-depends:
+    , base                     >=4.9     && <5
+    , bytestring
+    , criterion                >=1.5.9.0
+    , deepseq
+    , directory
+    , filepath
+    , flat                     ^>=0.6
+    , optparse-applicative
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-ledger-api        ^>=1.25
+
+---------------- Cek cost model calibration ----------------
+
+benchmark cek-calibration
+  import:           lang, ghc-version-support
+  type:             exitcode-stdio-1.0
+  default-language: Haskell2010
+  main-is:          Main.hs
+  hs-source-dirs:   cek-calibration
+  build-depends:
+    , base                     >=4.9     && <5
+    , criterion                >=1.5.9.0
+    , deepseq
+    , lens
+    , mtl
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-ledger-api        ^>=1.25
+    , plutus-tx                ^>=1.25
+    , plutus-tx-plugin         ^>=1.25
+
+---------------- Signature verification throughput ----------------
+
+executable ed25519-costs
+  import:           lang, ghc-version-support
+  default-language: Haskell2010
+  hs-source-dirs:   ed25519-costs/exe ed25519-costs/src
+  main-is:          Main.hs
+  other-modules:    PlutusBenchmark.Ed25519.Common
+  build-depends:
+    , base                     >=4.9   && <5
+    , bytestring
+    , cardano-crypto-class
+    , hedgehog
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-tx                ^>=1.25
+    , plutus-tx-plugin         ^>=1.25
+
+-- Calculate the predicted costs of sequences of ed25519 signature verification
+-- operations and compare them with a golden file.
+test-suite ed25519-costs-test
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: ed25519-costs/test ed25519-costs/src
+  main-is:        Spec.hs
+  other-modules:  PlutusBenchmark.Ed25519.Common
+  build-depends:
+    , base                                            >=4.9   && <5
+    , bytestring
+    , cardano-crypto-class
+    , hedgehog
+    , plutus-benchmark-common
+    , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
+    , plutus-tx                                       ^>=1.25
+    , plutus-tx-plugin                                ^>=1.25
+
+---------------- BLS12-381 experiments ----------------
+
+library bls12-381lib-internal
+  -- bls12-381-internal isn't allowed: you must have at least one letter in each
+  -- component.
+  import:          lang, ghc-version-support
+  hs-source-dirs:  bls12-381-costs/src
+  exposed-modules:
+    PlutusBenchmark.BLS12_381.RunTests
+    PlutusBenchmark.BLS12_381.Scripts
+
+  build-depends:
+    , base                     >=4.9   && <5
+    , bytestring
+    , hedgehog
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+    , plutus-ledger-api        ^>=1.25
+    , plutus-tx                ^>=1.25
+    , plutus-tx-plugin         ^>=1.25
+
+-- Print out predicted costs of various scripts involving BLS12-381 operations
+executable bls12-381-costs
+  import:           lang, ghc-version-support
+  default-language: Haskell2010
+  main-is:          Main.hs
+  hs-source-dirs:   bls12-381-costs/exe
+  build-depends:
+    , base                   >=4.9 && <5
+    , bls12-381lib-internal
+
+-- Calculate predicted costs of various scripts involving BLS12-381 operations
+-- and compare them with a golden file.
+test-suite bls12-381-costs-test
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: bls12-381-costs/test
+  build-depends:
+    , base                             >=4.9   && <5
+    , bls12-381lib-internal
+    , plutus-benchmark-common
+    , plutus-core:plutus-core-testlib  ^>=1.25
+
+-- Run benchmarks for various scripts involving BLS12-381 operations
+benchmark bls12-381-benchmarks
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Bench.hs
+  hs-source-dirs: bls12-381-costs/bench
+  build-depends:
+    , base                     >=4.9     && <5
+    , bls12-381lib-internal
+    , bytestring
+    , criterion                >=1.5.9.0
+    , deepseq
+    , plutus-benchmark-common
+    , plutus-ledger-api        ^>=1.25
+    , plutus-tx                ^>=1.25
+
+---------------- script contexts ----------------
+
+library script-contexts-internal
+  import:          lang, ghc-version-support
+  hs-source-dirs:  script-contexts/src
+  exposed-modules: PlutusBenchmark.ScriptContexts
+  build-depends:
+    , base               >=4.9   && <5
+    , plutus-ledger-api  ^>=1.25
+    , plutus-tx          ^>=1.25
+    , plutus-tx-plugin   ^>=1.25
+
+test-suite plutus-benchmark-script-contexts-tests
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: script-contexts/test
+  other-modules:
+  build-depends:
+    , base                                            >=4.9   && <5
+    , plutus-benchmark-common
+    , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
+    , plutus-tx:plutus-tx-testlib                     ^>=1.25
+    , script-contexts-internal
+    , tasty
+    , tasty-hunit
+    , text
+
+---------------- Marlowe scripts ----------------
+
+library marlowe-internal
+  import:          lang, ghc-version-support
+  hs-source-dirs:  marlowe/src
+  exposed-modules:
+    PlutusBenchmark.Marlowe.BenchUtil
+    PlutusBenchmark.Marlowe.Core.V1.Semantics
+    PlutusBenchmark.Marlowe.Core.V1.Semantics.Types
+    PlutusBenchmark.Marlowe.Core.V1.Semantics.Types.Address
+    PlutusBenchmark.Marlowe.Scripts.RolePayout
+    PlutusBenchmark.Marlowe.Scripts.Semantics
+    PlutusBenchmark.Marlowe.Types
+
+  build-depends:
+    , base
+    , bytestring
+    , cardano-crypto-class                            >=2.0.0.1 && <2.3
+    , directory
+    , filepath
+    , mtl
+    , newtype-generics
+    , plutus-benchmark-common
+    , plutus-core:{plutus-core, plutus-core-execlib}  ^>=1.25
+    , plutus-ledger-api                               ^>=1.25
+    , plutus-tx                                       ^>=1.25
+    , plutus-tx-plugin                                ^>=1.25
+    , serialise
+
+executable marlowe-validators
+  import:           lang, ghc-version-support
+  default-language: Haskell2010
+  hs-source-dirs:   marlowe/exe
+  main-is:          Main.hs
+  other-modules:
+    PlutusBenchmark.Marlowe.RolePayout
+    PlutusBenchmark.Marlowe.Semantics
+    PlutusBenchmark.Marlowe.Util
+
+  build-depends:
+    , base
+    , base16-bytestring
+    , bytestring
+    , cardano-binary
+    , marlowe-internal
+    , plutus-benchmark-common
+    , plutus-ledger-api        ^>=1.25
+    , plutus-tx                ^>=1.25
+    , serialise
+
+benchmark marlowe
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        BenchCek.hs
+  other-modules:  Shared
+  hs-source-dirs: marlowe/bench
+  build-depends:
+    , base                     >=4.9   && <5
+    , criterion
+    , deepseq
+    , marlowe-internal
+    , plutus-benchmark-common
+    , plutus-ledger-api        ^>=1.25
+    , plutus-tx                ^>=1.25
+
+test-suite plutus-benchmark-marlowe-tests
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: marlowe/test
+  other-modules:
+  build-depends:
+    , base                                            >=4.9   && <5
+    , marlowe-internal
+    , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
+    , plutus-ledger-api                               ^>=1.25
+    , plutus-tx:{plutus-tx, plutus-tx-testlib}        ^>=1.25
+    , tasty
+
+---------------- agda evaluators ----------------
+
+-- TODO: Add benchmarks for the executable semantics when we have a UPLC version
+
+library agda-internal
+  import:          lang
+  hs-source-dirs:  agda-common
+  exposed-modules: PlutusBenchmark.Agda.Common
+  build-depends:
+    , base               >=4.9   && <5
+    , criterion
+    , plutus-core        ^>=1.25
+    , plutus-metatheory
+
+benchmark validation-agda-cek
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        BenchAgdaCek.hs
+  hs-source-dirs: validation/bench
+  other-modules:  Common
+  build-depends:
+    , agda-internal
+    , base                     >=4.9     && <5
+    , bytestring
+    , criterion                >=1.5.9.0
+    , deepseq
+    , directory
+    , filepath
+    , flat                     ^>=0.6
+    , optparse-applicative
+    , plutus-benchmark-common
+    , plutus-core              ^>=1.25
+
+benchmark nofib-agda-cek
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        BenchAgdaCek.hs
+  hs-source-dirs: nofib/bench
+  other-modules:  Shared
+  build-depends:
+    , agda-internal
+    , base                     >=4.9     && <5
+    , criterion                >=1.5.9.0
+    , nofib-internal
+    , plutus-benchmark-common
+
+benchmark marlowe-agda-cek
+  import:         lang, ghc-version-support
+  type:           exitcode-stdio-1.0
+  main-is:        BenchAgdaCek.hs
+  other-modules:  Shared
+  hs-source-dirs: marlowe/bench
+  build-depends:
+    , agda-internal
+    , base                     >=4.9   && <5
+    , criterion
+    , marlowe-internal
+    , plutus-benchmark-common
+    , plutus-ledger-api        ^>=1.25
+    , plutus-tx                ^>=1.25

@@ -1,0 +1,17 @@
+(let
+  (nonrec)
+  (termbind
+    (strict)
+    (vardecl simple (con integer))
+    [ (lam y (con integer) y) (con integer 1) ]
+  )
+  (let
+    (nonrec)
+    (termbind
+      (strict)
+      (vardecl variableCapture (con integer))
+      [ (lam y (con integer) (con integer 42)) (con integer 24) ]
+    )
+    (con integer 42)
+  )
+)

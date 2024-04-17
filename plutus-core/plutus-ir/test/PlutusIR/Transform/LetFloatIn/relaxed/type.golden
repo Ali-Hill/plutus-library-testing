@@ -1,0 +1,26 @@
+(lam
+  n
+  (con integer)
+  [
+    (let
+      (nonrec)
+      (typebind (tyvardecl int (type)) (con integer))
+      {
+        {
+          (let
+            (nonrec)
+            (termbind
+              (strict)
+              (vardecl const (all a (type) (all b (type) (fun a (fun b a)))))
+              (abs a (type) (abs b (type) (lam x a (lam y b x))))
+            )
+            const
+          )
+          (con integer)
+        }
+        int
+      }
+    )
+    (con integer 1)
+  ]
+)

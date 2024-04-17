@@ -1,0 +1,103 @@
+cabal-version:      3.0
+name:               plutus-conformance
+version:            1.0.0.0
+license:            Apache-2.0
+license-files:
+  LICENSE
+  NOTICE
+
+maintainer:         marty.stumpf@iohk.io
+author:             Plutus Core Team
+synopsis:           Conformance Test Suite for Plutus Core
+description:        Comprehensive Conformance Test Suite for Plutus Core.
+category:           Language, Plutus, Conformance
+build-type:         Simple
+extra-doc-files:    README.md
+extra-source-files:
+
+source-repository head
+  type:     git
+  location: https://github.com/IntersectMBO/plutus
+
+common lang
+  default-language:   Haskell2010
+  default-extensions:
+    DeriveFoldable
+    DeriveFunctor
+    DeriveGeneric
+    DeriveLift
+    DeriveTraversable
+    DerivingStrategies
+    DerivingVia
+    ExplicitForAll
+    FlexibleContexts
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    ScopedTypeVariables
+    StandaloneDeriving
+
+  ghc-options:
+    -Wall -Wnoncanonical-monad-instances -Wincomplete-uni-patterns
+    -Wincomplete-record-updates -Wredundant-constraints -Widentities
+    -Wunused-packages -Wmissing-deriving-strategies
+
+library
+  import:          lang
+  hs-source-dirs:  src
+  exposed-modules: PlutusConformance.Common
+  build-depends:
+    , base
+    , directory
+    , filepath
+    , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
+    , tasty
+    , tasty-expected-failure
+    , tasty-golden
+    , text
+    , witherable
+
+-- NB: some of the Adga tests are marked as expected to fail.  If you just type
+-- `cabal test --test-options --accept` then the result files can be updated
+-- with successful results by haskell-conformance and then immediately
+-- overwritten with error messages by agda-conformance, which can put you back
+-- where you started.  To avoid this, only use `--accept` with
+-- haskell-conformance.
+test-suite haskell-conformance
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: haskell test-cases
+  other-modules:
+  build-depends:
+    , base                >=4.9   && <5
+    , plutus-conformance
+    , plutus-core         ^>=1.25
+
+test-suite haskell-steppable-conformance
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: haskell-steppable test-cases
+  other-modules:
+  build-depends:
+    , base                >=4.9   && <5
+    , lens
+    , plutus-conformance
+    , plutus-core         ^>=1.25
+
+test-suite agda-conformance
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: agda test-cases
+  other-modules:
+  build-depends:
+    , aeson
+    , base                >=4.9   && <5
+    , plutus-conformance
+    , plutus-core         ^>=1.25
+    , plutus-metatheory
+    , transformers
