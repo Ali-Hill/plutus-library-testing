@@ -10,7 +10,7 @@ let
 
       # We need the mkDefault here since compiler-nix-name will be overridden 
       # in the flake variants.
-      compiler-nix-name = lib.mkDefault "ghc96";
+      compiler-nix-name = lib.mkDefault "ghc963";
 
       src = ../.;
 

@@ -169,6 +169,42 @@ library plutus-tx-testlib
     , tasty-hedgehog
     , text
 
+test-suite liquid-test
+  import:             lang
+
+  if (impl(ghcjs) || os(windows))
+    buildable: False
+
+  type:               exitcode-stdio-1.0
+  main-is:            Liquid.hs
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N
+  other-modules:
+  hs-source-dirs:     test
+  build-tool-depends: doctest:doctest
+  build-depends:
+    , aeson
+    , base                                            >=4.9   && <5
+    , base16-bytestring
+    , bytestring
+    , cborg
+    , containers
+    , filepath
+    , hedgehog
+    , hedgehog-fn
+    , lens
+    , liquidhaskell
+    , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
+    , plutus-tx                                       ^>=1.25
+    , pretty-show
+    , serialise
+    , tasty
+    , tasty-hedgehog
+    , tasty-hunit
+    , text
+    , transformers
+
+  ghc-options:        -fplugin=LiquidHaskell
+
 test-suite plutus-tx-test
   import:             lang
 
@@ -209,6 +245,7 @@ test-suite plutus-tx-test
     , hedgehog
     , hedgehog-fn
     , lens
+    , liquidhaskell
     , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
     , plutus-tx                                       ^>=1.25
     , pretty-show
@@ -218,3 +255,5 @@ test-suite plutus-tx-test
     , tasty-hunit
     , text
     , transformers
+
+  ghc-options:        -fplugin=LiquidHaskell

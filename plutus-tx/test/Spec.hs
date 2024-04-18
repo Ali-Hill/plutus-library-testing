@@ -310,4 +310,3 @@ enumFromThenToTests = testGroup "enumFromThenTo"
                 where possiblyInfinite l = drop 1000 l /= []
                       showInit l = "[" ++ intercalate "," (fmap show (take 5 l)) ++ ",...]"
                       failWith expected actual = assertFailure  ("expected: " ++ expected ++ "\n but got: " ++ actual)
-
