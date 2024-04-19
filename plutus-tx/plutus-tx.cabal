@@ -255,5 +255,3 @@ test-suite plutus-tx-test
     , tasty-hunit
     , text
     , transformers
-
-  ghc-options:        -fplugin=LiquidHaskell

@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications  #-}
-module Liquid where
+module Main where
 
 import Prelude hiding (Enum (..), Rational, negate, recip)
 
@@ -12,4 +12,7 @@ import Prelude hiding (Enum (..), Rational, negate, recip)
 
 {-@ incr :: Pos -> Pos @-}
 incr :: Int -> Int
-incr x = x - 1
+incr x = x + 1
+
+main :: IO ()
+main = putStrLn "test"
