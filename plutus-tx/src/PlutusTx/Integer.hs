@@ -6,3 +6,4 @@ We export off-chain Haskell's Integer type as on-chain Plutus's Integer type sin
 -}
 
 import Prelude (Integer)
+import Prelude qualified as P

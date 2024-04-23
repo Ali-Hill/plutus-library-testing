@@ -22,11 +22,15 @@ import PlutusTx.Maybe (Maybe (..))
 -- Standard types
 -- These need to be in a separate file for TH staging reasons
 
-makeLift ''Bool
+{-@ ignore liftBool @-}
+{-@ ignore liftUnit @-}
+{-@ ignore liftList @-}
+
+liftBool = makeLift ''Bool
 makeLift ''Maybe
 makeLift ''Either
-makeLift ''[]
-makeLift ''()
+liftList = makeLift ''[]
+liftUnit = makeLift ''()
 -- include a few tuple instances for convenience
 makeLift ''(,)
 makeLift ''(,,)

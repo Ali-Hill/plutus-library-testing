@@ -2,6 +2,7 @@
 module PlutusTx.Base (fst, snd, curry, uncurry, ($), flip, until, (.), const, id) where
 
 import PlutusTx.Bool
+import Prelude qualified as P
 
 {-# INLINABLE fst #-}
 -- | Plutus Tx version of 'Data.Tuple.fst'

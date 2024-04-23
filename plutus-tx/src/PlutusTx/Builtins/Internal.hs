@@ -89,6 +89,28 @@ otherwise GHC gets very keen to optimize through the newtype and e.g. our users
 see 'Addr#' popping up everywhere.
 -}
 
+{-@ ignore error @-}
+{-@ ignore divideInteger @-}
+{-@ ignore modInteger @-}
+{-@ ignore quotientInteger @-}
+{-@ ignore remainderInteger @-}
+{-@ ignore indexByteString @-}
+{-@ ignore verifyEd25519Signature @-}
+{-@ ignore verifyEcdsaSecp256k1Signature @-}
+{-@ ignore verifySchnorrSecp256k1Signature @-}
+{-@ ignore head @-}
+{-@ ignore tail @-}
+{-@ ignore unsafeDataAsConstr @-}
+{-@ ignore unsafeDataAsMap @-}
+{-@ ignore unsafeDataAsList @-}
+{-@ ignore unsafeDataAsI @-}
+{-@ ignore unsafeDataAsB @-}
+{-@ ignore bls12_381_G1_uncompress @-}
+{-@ ignore bls12_381_G1_hashToGroup @-}
+{-@ ignore bls12_381_G2_uncompress @-}
+{-@ ignore bls12_381_G2_hashToGroup @-}
+{-@ ignore integerToByteString @-}
+
 {-# NOINLINE error #-}
 error :: BuiltinUnit -> a
 error = Haskell.error "PlutusTx.Builtins.Internal.error"

@@ -1,5 +1,5 @@
 -- editorconfig-checker-disable-file
-
+{-@ LIQUID "--no-positivity-check" @-}
 -- | Primitive names and functions for working with Plutus Core builtins.
 module PlutusTx.Builtins (
                           -- * Bytestring builtins

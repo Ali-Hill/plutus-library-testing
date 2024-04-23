@@ -1,4 +1,5 @@
 -- editorconfig-checker-disable-file
+{-@ LIQUID "--prune-unsorted" @-}
 {-# LANGUAGE BangPatterns    #-}
 {-# LANGUAGE CPP             #-}
 {-# LANGUAGE TemplateHaskell #-}

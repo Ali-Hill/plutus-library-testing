@@ -4,12 +4,11 @@ module PlutusTx.Bool (Bool(..), (&&), (||), not, otherwise) where
 We export off-chain Haskell's Bool type as on-chain Plutus's Bool type since they are the same.
 -}
 
-import Prelude (Bool (..), otherwise)
+import Prelude hiding (not, (&&), (||))
 
 {- HLINT ignore -}
 
 -- See Note [Lazy boolean operators] in the plugin.
-
 {-# INLINE (&&) #-}
 -- | Logical AND
 --

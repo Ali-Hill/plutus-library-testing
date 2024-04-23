@@ -1,3 +1,6 @@
+{-@ LIQUID "--reflection"     @-}
+{-@ LIQUID "--ple"            @-}
+{-@ LIQUID "--no-termination" @-}
 {-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DerivingStrategies    #-}
@@ -50,9 +53,19 @@ import Control.Monad (guard)
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.:))
 import GHC.Generics
 import GHC.Real qualified as Ratio
+import PlutusIR.Compiler.Let (LetKind (Types))
 import Prelude (Ord (..), Show, (*))
 import Prelude qualified as Haskell
 import Prettyprinter (Pretty (..), (<+>))
+
+-- Liquid Types
+{-@ type Zero    = {v:Integer | v == 0} @-}
+{-@ type NonZero = {v:Integer | v /= 0} @-}
+{-@ type Positive   = {v:Integer | 0 < v} @-}
+
+{-@ zero :: Zero @-}
+zero :: Integer
+zero = 1
 
 -- | Represents an arbitrary-precision ratio.
 --
@@ -105,6 +118,7 @@ instance P.AdditiveSemigroup Rational where
 instance P.AdditiveMonoid Rational where
   {-# INLINABLE zero #-}
   zero = Rational P.zero P.one
+
 
 instance P.AdditiveGroup Rational where
   {-# INLINABLE (-) #-}
@@ -183,6 +197,7 @@ instance FromJSON Rational where
 -- If given a zero denominator, this function will error. If you don't mind a
 -- size increase, and care about safety, use 'ratio' instead.
 {-# INLINABLE unsafeRatio #-}
+{-@ unsafeRatio :: Integer -> Positive -> Rational @-}
 unsafeRatio :: Integer -> Integer -> Rational
 unsafeRatio n d
   | d P.== P.zero = P.traceError P.ratioHasZeroDenominatorError
@@ -338,7 +353,7 @@ euclid x y
   | y P.== P.zero = x
   | P.True = euclid y (x `Builtins.modInteger` y)
 
-P.makeLift ''Rational
+-- P.makeLift ''Rational
 
 {- HLINT ignore -}
 

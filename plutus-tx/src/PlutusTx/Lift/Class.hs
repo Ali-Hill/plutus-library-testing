@@ -1,4 +1,5 @@
 -- editorconfig-checker-disable-file
+{-@ LIQUID "--no-positivity-check" @-}
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
@@ -40,6 +41,8 @@ import Data.Kind qualified as GHC
 import Data.Proxy
 import Data.Text qualified as T
 import GHC.TypeLits (ErrorMessage (..), TypeError)
+
+import Data.ByteString.Lazy
 
 -- We do not use qualified import because the whole module contains off-chain code
 import Prelude as Haskell

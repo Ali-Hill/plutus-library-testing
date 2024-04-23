@@ -1,4 +1,5 @@
 -- editorconfig-checker-disable-file
+{-@ LIQUID "--prune-unsorted" @-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE PartialTypeSignatures #-}
@@ -57,6 +58,7 @@ import Data.Proxy
 -- We do not use qualified import because the whole module contains off-chain code
 import Prelude as Haskell
 
+{-@ ignore safeLift @-}
 -- | Get a Plutus Core term corresponding to the given value.
 safeLift
     :: forall a e uni fun m
@@ -200,6 +202,7 @@ So we don't have access to the type directly, annoyingly. Instead, we can constr
 iff the original term has the given type. We opt for `(\x : <the type> -> x) term`.
 -}
 
+{-@ ignore typeCheckAgainst @-}
 -- | Check that PLC term has the given type.
 typeCheckAgainst
     :: forall e a uni fun m .

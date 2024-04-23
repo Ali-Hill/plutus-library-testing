@@ -91,6 +91,7 @@ applyCode fun arg = do
 
 -- | Apply a compiled function to a compiled argument. Will throw if the versions don't match,
 -- should only be used in non-production code.
+{-@ ignore unsafeApplyCode @-}
 unsafeApplyCode
     :: (PLC.Closed uni
     , uni `PLC.Everywhere` Flat

@@ -1,4 +1,6 @@
 -- editorconfig-checker-disable-file
+{-@ LIQUID "--no-positivity-check" @-}
+{-@ LIQUID "--prune-unsorted" @-}
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DefaultSignatures     #-}

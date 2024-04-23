@@ -10,6 +10,7 @@ import Data.Coerce (coerce)
 import PlutusTx.Base
 import PlutusTx.Either (Either (..))
 import Prelude (Maybe (..))
+import Prelude qualified as P
 
 {- HLINT ignore -}
 

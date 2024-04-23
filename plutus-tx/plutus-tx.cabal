@@ -49,7 +49,6 @@ library
     PlutusTx
     PlutusTx.Applicative
     PlutusTx.AsData
-    PlutusTx.AssocMap
     PlutusTx.Base
     PlutusTx.Blueprint
     PlutusTx.Blueprint.Argument
@@ -104,6 +103,7 @@ library
     PlutusTx.Traversable
     PlutusTx.Utils
 
+  --  PlutusTx.AssocMap
   other-modules:
     PlutusTx.IsData.Instances
     PlutusTx.IsData.TH
@@ -138,7 +138,8 @@ library
 
   default-extensions: Strict
 
-  -- See Note [-fno-full-laziness in Plutus Tx]
+  see Note [ -fno-full-laziness in Plutus Tx ]
+
   ghc-options:
     -fexpose-all-unfoldings -fno-specialise -fno-spec-constr
     -fno-strictness -fno-unbox-strict-fields
@@ -255,3 +256,59 @@ test-suite plutus-tx-test
     , tasty-hunit
     , text
     , transformers
+
+test-suite ratio-test
+  import:             lang
+
+  if (impl(ghcjs) || os(windows))
+    buildable: False
+
+  type:               exitcode-stdio-1.0
+  main-is:            Liquid.hs
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N
+  other-modules:      PlutusTx.Ratio
+  hs-source-dirs:     test src
+  build-tool-depends: doctest:doctest
+  build-depends:
+    , aeson
+    , base                                                       >=4.9      && <5
+    , base16-bytestring
+    , bytestring
+    , cborg
+    , containers
+    , data-default-class
+    , deepseq
+    , filepath
+    , flat
+    , ghc-prim
+    , hashable
+    , hedgehog
+    , hedgehog-fn
+    , lens
+    , liquidhaskell
+    , memory
+    , mtl
+    , plutus-core:{plutus-core, plutus-core-testlib, plutus-ir}  ^>=1.25
+    , plutus-tx                                                  ^>=1.25
+    , pretty-show
+    , prettyprinter
+    , serialise
+    , tasty
+    , tasty-hedgehog
+    , tasty-hunit
+    , template-haskell                                           >=2.13.0.0
+    , text
+    , th-abstraction
+    , th-compat
+    , transformers
+
+  default-extensions: Strict
+
+  see Note [ -fno-full-laziness in Plutus Tx ]
+
+  ghc-options:
+    -fplugin=LiquidHaskell -fplugin-opt=LiquidHaskell:--notermination
+    -fplugin-opt=LiquidHaskell:--max-case-expand=0
+    -fexpose-all-unfoldings -fno-specialise -fno-spec-constr
+    -fno-strictness -fno-unbox-strict-fields
+    -fno-unbox-small-strict-fields -fno-full-laziness

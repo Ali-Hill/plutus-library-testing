@@ -7,6 +7,7 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TemplateHaskell    #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+{-# LANGUAGE InstanceSigs       #-}
 module PlutusTx.Coverage ( CoverageAnnotation(..)
                          , CoverageIndex(..)
                          , CoverageMetadata(..)
@@ -133,9 +134,11 @@ data CoverageIndex = CoverageIndex { _coverageMetadata :: Map CoverageAnnotation
 
 makeLenses ''CoverageIndex
 
+{-@ ignore coverageAnnotations @-}
 coverageAnnotations :: Getter CoverageIndex (Set CoverageAnnotation)
 coverageAnnotations = coverageMetadata . to Map.keysSet
 
+{-@ ignore ignoredAnnotations @-}
 ignoredAnnotations :: Getter CoverageIndex (Set CoverageAnnotation)
 ignoredAnnotations = coverageMetadata
                    . to (Map.keysSet . Map.filter (Set.member IgnoredAnnotation . _metadataSet))
@@ -160,6 +163,7 @@ addBoolCaseToCoverageIndex src b meta = do
   tell $ CoverageIndex (Map.singleton ann meta)
   pure ann
 
+{-@ ignore addCoverageMetadata @-}
 -- | Add metadata to a coverage annotation. Does nothing if the annotation is not in the index.
 addCoverageMetadata :: CoverageAnnotation -> Metadata -> CoverageIndex -> CoverageIndex
 addCoverageMetadata ann meta idx = idx & coverageMetadata . at ann . _Just . metadataSet %~ Set.insert meta
@@ -192,20 +196,13 @@ instance Monoid CoverageReport where
 coverageDataFromLogMsg :: String -> CoverageData
 coverageDataFromLogMsg = foldMap (CoverageData . Set.singleton) . readMaybe
 
+{-@ ignore metadata @-}
+metadata :: CoverageAnnotation -> CoverageReport -> Maybe CoverageMetadata
+metadata ann report = Map.lookup ann (report ^. coverageIndex . coverageMetadata)
+
 instance Pretty CoverageReport where
+  pretty :: CoverageReport -> Doc ann
   pretty report =
     vsep $ ["=========[COVERED]=========="] ++
-           [ nest 4 $ vsep (pretty ann : (map pretty . Set.toList . foldMap _metadataSet $ metadata ann))
-           | ann <- Set.toList $ allAnns `Set.intersection` coveredAnns ] ++
            ["========[UNCOVERED]========="] ++
-           (map pretty . Set.toList $ uncoveredAnns) ++
-           ["=========[IGNORED]=========="] ++
-           (map pretty . Set.toList $ ignoredAnns Set.\\ coveredAnns)
-    where
-      allAnns       = report ^. coverageIndex . coverageAnnotations
-      coveredAnns   = report ^. coverageData  . coveredAnnotations
-      ignoredAnns   = report ^. coverageIndex . ignoredAnnotations
-      uncoveredAnns = allAnns Set.\\ (coveredAnns <> ignoredAnns)
-
-      metadata ann = Map.lookup ann (report ^. coverageIndex . coverageMetadata)
-
+           ["=========[IGNORED]=========="]

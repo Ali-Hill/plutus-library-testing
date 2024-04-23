@@ -1,4 +1,5 @@
 -- editorconfig-checker-disable-file
+{-@ LIQUID "--no-totality" @-}
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE EmptyCase            #-}
 {-# LANGUAGE KindSignatures       #-}
@@ -30,7 +31,6 @@ import Data.Kind
 import Data.Void
 
 import GHC.TypeLits (ErrorMessage (..), TypeError)
-
 
 {- HLINT ignore -}
 
