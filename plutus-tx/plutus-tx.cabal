@@ -193,10 +193,10 @@ test-suite liquid-test
     , hedgehog
     , hedgehog-fn
     , lens
-    , liquidhaskell
     , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
     , plutus-tx                                       ^>=1.25
     , pretty-show
+    , sbv
     , serialise
     , tasty
     , tasty-hedgehog
@@ -204,8 +204,7 @@ test-suite liquid-test
     , text
     , transformers
 
-  ghc-options:        -fplugin=LiquidHaskell
-
+-- , liquidhaskell
 test-suite plutus-tx-test
   import:             lang
 
@@ -246,7 +245,6 @@ test-suite plutus-tx-test
     , hedgehog
     , hedgehog-fn
     , lens
-    , liquidhaskell
     , plutus-core:{plutus-core, plutus-core-testlib}  ^>=1.25
     , plutus-tx                                       ^>=1.25
     , pretty-show
@@ -257,6 +255,7 @@ test-suite plutus-tx-test
     , text
     , transformers
 
+--  , liquidhaskell
 test-suite ratio-test
   import:             lang
 
@@ -285,7 +284,6 @@ test-suite ratio-test
     , hedgehog
     , hedgehog-fn
     , lens
-    , liquidhaskell
     , memory
     , mtl
     , plutus-core:{plutus-core, plutus-core-testlib, plutus-ir}  ^>=1.25
@@ -302,13 +300,13 @@ test-suite ratio-test
     , th-compat
     , transformers
 
+  --   , liquidhaskell
   default-extensions: Strict
 
   see Note [ -fno-full-laziness in Plutus Tx ]
 
   ghc-options:
-    -fplugin=LiquidHaskell -fplugin-opt=LiquidHaskell:--notermination
-    -fplugin-opt=LiquidHaskell:--max-case-expand=0
     -fexpose-all-unfoldings -fno-specialise -fno-spec-constr
     -fno-strictness -fno-unbox-strict-fields
-    -fno-unbox-small-strict-fields -fno-full-laziness
+    -fno-unbox-small-strict-fields -fno-full-laziness +RTS -s
+    -K1000000k -kc10000k

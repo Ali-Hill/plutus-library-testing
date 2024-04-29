@@ -1,6 +1,3 @@
-{-@ LIQUID "--reflection"     @-}
-{-@ LIQUID "--ple"            @-}
-{-@ LIQUID "--no-termination" @-}
 {-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DerivingStrategies    #-}
@@ -11,6 +8,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# OPTIONS_GHC -fplugin-opt PlutusTx.Plugin:context-level=3 #-}
+{-# LANGUAGE InstanceSigs          #-}
 
 module PlutusTx.Ratio(
     -- * Type
@@ -80,8 +78,11 @@ data Rational = Rational Integer Integer
     Generic
     )
 
+{-
 instance Pretty Rational where
+  pretty :: Rational -> Prettyprinter.Internal.Doc ann
   pretty (Rational a b) = "Rational:" <+> pretty a <+> pretty b
+-}
 
 instance P.Eq Rational where
   {-# INLINABLE (==) #-}

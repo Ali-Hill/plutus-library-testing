@@ -81,16 +81,3 @@ allow-newer:
   , inline-r:bytestring
   , inline-r:containers
   , inline-r:primitive
-
-source-repository-package
-    type: git
-    location: https://github.com/ucsd-progsys/liquidhaskell
-    tag: 1122fa9db55cc98b33730ab338f71554f7f65ed3
-    subdir: . liquidhaskell-boot liquid-prelude liquid-vector
-    --sha256: sha256-9uI6VTDIQ2DYKDwRRvoRg0C1d7x6klvtcX1zS+Mws/c=
-
-source-repository-package
-    type: git
-    location: https://github.com/ucsd-progsys/liquid-fixpoint
-    tag: 28c6d943a18d8d636385a7ff1fa10e81a7b4a0ab
-    --sha256: sha256-5vD+5o2+3IOhIE6J4jWRR4Os3oHksnhmC1gmqT3A5eA=
