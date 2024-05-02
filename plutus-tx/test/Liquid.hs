@@ -108,10 +108,6 @@ test1 = safe checkedDiv
 test2 :: IO [SafeResult]
 test2 = safe $ \x y -> ite (y .== 0) 3 (checkedDiv x y)
 
-helpMe :: Int -> Either String Int
-helpMe 0 = Right 0
-helpMe _ = Left "not zero"
-
 -- safeCallDiv :: SInt32 -> SInt32 -> SEither SString Int32
 -- safeCallDiv x y = if y == 0 then sLeft "error" else sRight $ checkedDiv x y
 
